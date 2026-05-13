@@ -8,24 +8,23 @@
 cat("\n========== PHASE 2: UNSUPERVISED ANALYSIS ==========\n")
 
 # --- 0. Load Phase 1 Results ---
-cat("\n[0/7] Loading Phase 1 results...\n")
-source("01_Phase1_Setup.R")
+source("scripts/01_Phase1_Setup.R")
 
 # --- 1. DESCRIPTIVE ANALYSIS ---
-cat("\n[1/7] Univariate and bivariate analysis...\n")
-
-# Convert GENRE to factor if not already
-Music_data$GENRE <- as.factor(Music_data$GENRE)
+# [1/7] Univariate and bivariate analysis...
 
 # Genre proportions table
 genre_prop <- prop.table(table(Music_data$GENRE))
 cat("\nGenre Distribution (Proportions):\n")
 print(round(genre_prop * 100, 2))
+# Blues Classical      Jazz       Pop      Rock 
+# 13.82     29.82     26.19     13.29     16.88 
 
 # Save for report
 genre_df <- data.frame(
   Genre = names(genre_prop),
-  Count = as.numeric(table(Music_data$GENRE)),
+  Count = as.numeric(table(Music_data$GE+
+                             NRE)),
   Proportion = round(genre_prop * 100, 2)
 )
 cat("\nGenre Summary Table:\n")
@@ -36,9 +35,16 @@ cat("\nBasic statistics for selected variables:\n")
 key_vars <- c("PAR_TC", "PAR_SC", "PAR_SC_V", "PAR_ASC", "PAR_ASC_V")
 numeric_data <- Music_data[, key_vars]
 print(summary(numeric_data))
+# PAR_TC           PAR_SC          PAR_SC_V           PAR_ASC         PAR_ASC_V       
+# Min.   :0.8377   Min.   :  34.1   Min.   :     605   Min.   :-4.819   Min.   :0.005926  
+# 1st Qu.:2.3980   1st Qu.: 497.0   1st Qu.:   37012   1st Qu.:-1.917   1st Qu.:0.242090  
+# Median :2.4995   Median : 683.2   Median :   92723   Median :-1.419   Median :0.453720  
+# Mean   :2.4881   Mean   : 749.0   Mean   :  263707   Mean   :-1.486   Mean   :0.631902  
+# 3rd Qu.:2.5905   3rd Qu.: 931.7   3rd Qu.:  237330   3rd Qu.:-1.010   3rd Qu.:0.825520  
+# Max.   :4.4046   Max.   :4043.5   Max.   :10485000   Max.   : 1.384   Max.   :4.947100 
 
 # --- 2. LOG TRANSFORMATIONS ---
-cat("\n[2/7] Applying log transformations...\n")
+# [2/7] Applying log transformations...
 
 # Identify variables to transform
 cat("\nVariables to transform:\n")

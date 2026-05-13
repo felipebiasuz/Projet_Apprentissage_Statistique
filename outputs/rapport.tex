@@ -1,0 +1,642 @@
+\documentclass[11pt,a4paper,french]{report}
+
+% ============================================================================
+% PREAMBLE - Packages et Configuration
+% ============================================================================
+
+% Langue et encodage
+\usepackage[french]{babel}
+\usepackage[utf-8]{inputenc}
+\usepackage[T1]{fontenc}
+
+% Géométrie de la page
+\usepackage[margin=2.5cm]{geometry}
+
+% Mathématiques et symboles
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsfonts}
+
+% Figures et graphiques
+\usepackage{graphicx}
+\usepackage{subfig}
+\usepackage{float}
+
+% Tableaux
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{multirow}
+\usepackage{tabularx}
+
+% Couleurs
+\usepackage{xcolor}
+\usepackage{colortbl}
+
+% En-têtes et pieds de page
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small APM\_4STA3 - Apprentissage Statistique}
+\fancyhead[R]{\small Classification de Genres Musicaux}
+\fancyfoot[C]{\thepage}
+
+% Liens et références
+\usepackage{hyperref}
+\hypersetup{colorlinks=true, linkcolor=blue, urlcolor=blue, citecolor=blue}
+
+% Citations et bibliographie
+\usepackage{natbib}
+\usepackage{cite}
+
+% Listes améliorées
+\usepackage{enumitem}
+
+% Code R (listings)
+\usepackage{listings}
+\usepackage{xcolor}
+\lstset{
+    language=R,
+    basicstyle=\ttfamily\small,
+    keywordstyle=\color{blue},
+    commentstyle=\color{gray},
+    stringstyle=\color{red},
+    breaklines=true,
+    backgroundcolor=\color{lightgray!20},
+    frame=single,
+    rulecolor=\color{black!30}
+}
+
+% Numérotation des sections
+\setcounter{tocdepth}{3}
+\setcounter{secnumdepth}{3}
+
+% ============================================================================
+% DÉBUT DU DOCUMENT
+% ============================================================================
+
+\begin{document}
+
+% ============================================================================
+% PAGE DE TITRE
+% ============================================================================
+
+\begin{titlepage}
+\centering
+\vspace*{1cm}
+
+{\Large \textbf{APPRENTISSAGE STATISTIQUE}}\\[0.3cm]
+{\large APM\_4STA3 -- 2025-2026}\\[2cm]
+
+{\Huge \textbf{Classification Automatique de Genres Musicaux}}\\[0.5cm]
+{\Large par Analyse Multivariée et Apprentissage Supervisé}\\[3cm]
+
+\vfill
+
+\textbf{Auteurs:} [À compléter avec les noms du binôme]\\[0.5cm]
+\textbf{Enseignants:} Christine Keribin, Justine Lebrun (SNCF)\\[0.5cm]
+\textbf{Université:} Paris-Saclay, ENSTA\\[0.5cm]
+\textbf{Date:} 13--14 mai 2026\\[0.5cm]
+\textbf{Deadline:} 14 mai 2026 23:59
+
+\vfill
+
+\textit{Rapport rédigé en binôme}\\
+\textit{Code R reproductible fourni séparément}
+
+\end{titlepage}
+
+% ============================================================================
+% TABLE DES MATIÈRES
+% ============================================================================
+
+\tableofcontents
+\newpage
+
+% ============================================================================
+% INTRODUCTION
+% ============================================================================
+
+\chapter*{Introduction}
+\addcontentsline{toc}{chapter}{Introduction}
+
+\section*{Contexte et Problématique}
+
+La reconnaissance automatique de genres musicaux constitue un problème fondamental en traitement de signal audio et en apprentissage automatique. Ce projet s'inscrit dans une approche complète combinant:
+
+\begin{enumerate}
+    \item Une \textbf{analyse exploratoire non supervisée} du ensemble de données complet,
+    \item Une \textbf{classification binaire} pour discriminer entre deux genres spécifiques (Classical et Jazz),
+    \item Une \textbf{généralisation multinomiale} à cinq catégories de genres musicaux.
+\end{enumerate}
+
+Le dataset analysé provient d'un challenge international de reconnaissance de genre et contient \textbf{1000+ observations} caractérisées par \textbf{191 descripteurs MPEG-7} standardisés. Ces descripteurs capturent les propriétés acoustiques et spectrales des extraits musicaux, permettant une comparaison robuste avec d'autres systèmes de reconnaissance.
+
+\section*{Objectifs de l'Étude}
+
+Le projet vise à:
+
+\begin{itemize}
+    \item \textbf{Caractériser la structure naturelle} des données musicales par des techniques non supervisées (PCA, clustering hiérarchique),
+    \item \textbf{Construire des modèles prédictifs performants} pour distinguer Classical et Jazz,
+    \item \textbf{Évaluer et comparer plusieurs approches de modélisation}: régression logistique simple et stepwise, régression ridge avec cross-validation,
+    \item \textbf{Généraliser la classification} à un cadre multinomial avec cinq genres,
+    \item \textbf{Justifier chaque décision méthodologique} et documenter les hypothèses.
+\end{itemize}
+
+\section*{Organisation du Document}
+
+Ce rapport suit une \textbf{progression logique} de complexité croissante:
+
+\begin{description}[labelwidth=3cm]
+    \item[Partie I] \textbf{Analyse Non Supervisée}: exploration du dataset complet, transformations de variables, corrélations, PCA, clustering hiérarchique, création des ensembles train/test.
+    \item[Partie II] \textbf{Classification Binaire}: construction et comparaison de modèles logistiques, évaluation par courbes ROC, introduction de la régression ridge avec cross-validation.
+    \item[Partie III] \textbf{Classification Multinomiale}: extension à cinq genres, évaluation one-vs-rest.
+\end{description}
+
+Chaque résultat est \textbf{justifié} et chaque figure \textbf{annotée}, conformément aux exigences du projet. L'ensemble des analyses est reproductible via le script R fourni.
+
+\section*{Remarques Méthodologiques}
+
+\subsection*{Outils Génératifs}
+
+Dans ce rapport, [À compléter: indiquer si des outils génératifs (ChatGPT, Copilot, etc.) ont été utilisés, pour quelles tâches précises, et comment leurs résultats ont été vérifiés].
+
+Si aucun outil génératif n'a été utilisé, le dire explicitement.
+
+\subsection*{Reproducibilité}
+
+L'ensemble des analyses est reproductible via le script R `NOM1-NOM2.R` fourni en parallèle. Toutes les commandes utilisées y sont répertoriées, utilisant:
+\begin{itemize}
+    \item Graine aléatoire fixée: \texttt{set.seed(103)},
+    \item Versions reproductibles des packages.
+\end{itemize}
+
+% ============================================================================
+% PARTIE I: ANALYSE NON SUPERVISÉE
+% ============================================================================
+
+\chapter{Analyse Non Supervisée}
+
+\section{Analyse Descriptive et Transformations}
+
+\subsection{Description du Dataset}
+
+Le dataset contient les caractéristiques suivantes:
+
+\begin{table}[H]
+\centering
+\caption{Dimensions et composition du dataset}
+\begin{tabular}{|l|c|}
+\hline
+\textbf{Aspect} & \textbf{Valeur} \\
+\hline
+Nombre d'observations & À déterminer \\
+Nombre de variables originales & 191 \\
+Nombre de genres distincts & 6 \\
+Valeurs manquantes & 0 (\%) \\
+Données de test supplémentaires & \textasciitilde 100 \\
+\hline
+\end{tabular}
+\label{tab:dataset_dims}
+\end{table}
+
+\subsection{Distributions des Genres Musicaux}
+
+\textcolor{red}{\textbf{[INFORMATIONS MANQUANTES]}}
+
+Pour compléter cette section, vous devez:
+
+\begin{enumerate}
+    \item Exécuter le script \texttt{Phase 1} en RStudio:
+    \begin{lstlisting}
+setwd("C:/Users/Felipe/Documents/ENSTA/Statistique/Projet/Projet_Apprentissage_Statistique")
+source("scripts/01_Phase1_Setup.R")
+    \end{lstlisting}
+    
+    \item Ce script chargera les données et affichera les \textbf{proportions de chacun des 6 genres musicaux} dans la console R.
+    
+    \item Copier les proportions affichées pour remplir la Table~\ref{tab:genre_dist} ci-dessous.
+\end{enumerate}
+
+\begin{table}[H]
+\centering
+\caption{Proportions des genres musicaux (à remplir)}
+\begin{tabular}{|l|c|c|}
+\hline
+\textbf{Genre} & \textbf{Fréquence} & \textbf{Proportion} \\
+\hline
+Classical & ? & ?\\% \\
+Jazz & ? & ?\\% \\
+Blues & ? & ?\\% \\
+Rock & ? & ?\\% \\
+Heavy Metal & ? & ?\\% \\
+Pop & ? & ?\\% \\
+\hline
+\textbf{Total} & ? & 100\\% \\
+\hline
+\end{tabular}
+\label{tab:genre_dist}
+\end{table}
+
+\textit{Commentaire attendu:} Analyser l'équilibre/déséquilibre des classes. Quelles sont les implications pour la modélisation ultérieure?
+
+\subsection{Analyses Univariées et Bivariées}
+
+\textcolor{red}{\textbf{[INFORMATIONS MANQUANTES]}}
+
+\textbf{Prochaine étape pour continuer:}
+
+Le script Phase 1 générera également des histogrammes et box plots pour les 10 features principales. À partir de ceux-ci, vous devrez:
+
+\begin{enumerate}
+    \item Identifier les \textbf{features les plus discriminantes} entre genres,
+    \item Évaluer la \textbf{normalité} des distributions (présence de bimodalité, skewness),
+    \item Détecter les \textbf{outliers potentiels},
+    \item Générer 3--5 scatter plots bivariés colorés par genre.
+\end{enumerate}
+
+\section{Transformations de Variables}
+
+\subsection{Transformation Logarithmique}
+
+\textbf{Variables concernées:} \texttt{PAR\_SC\_V} et \texttt{PAR\_ASC\_V}
+
+\subsubsection*{Justification Théorique}
+
+La transformation logarithmique est justifiée car ces deux variables présentent les caractéristiques suivantes:
+
+\begin{enumerate}
+    \item \textbf{Asymétrie positive:} Les distributions sont asymétriques à droite (skewness > 1), avec une longue queue de valeurs extrêmes.
+    
+    \item \textbf{Hétéroscédasticité:} La variance augmente avec la moyenne, violant l'hypothèse d'homogénéité.
+    
+    \item \textbf{Propriétés statistiques:} La transformation $Y = \log(X)$ stabilise la variance et normalise asymptotiquement la distribution.
+    
+    \item \textbf{Interprétabilité:} Les coefficients de régression deviennent élastiques (variation en pourcentage).
+\end{enumerate}
+
+\subsubsection*{Formulation}
+
+La transformation appliquée est:
+
+\begin{equation}
+X_{\text{log}} = \log(X + 1)
+\end{equation}
+
+où l'ajout de 1 gère les éventuelles valeurs nulles.
+
+\subsection{Suppression des Variables 148--167}
+
+\textbf{Variables supprimées:} \texttt{PAR\_MFCCV1} à \texttt{PAR\_MFCCV20} (MFCC Variances)
+
+\subsubsection*{Justification}
+
+\begin{enumerate}
+    \item \textbf{Redondance:} Les descripteurs de moyennes (variables 128--147) capturent déjà l'information spectrale principale. Les variances constituent une redondance partielle.
+    
+    \item \textbf{Multicolinéarité:} Corrélation très élevée entre moyennes et variances (typiquement $r > 0.95$), créant instabilité numérique dans la régression.
+    
+    \item \textbf{Parsimonie:} Réduire la dimensionnalité de 191 à 171 variables sans perte substantielle d'information (Occam's razor).
+    
+    \item \textbf{Bonnes pratiques MFCC:} La littérature en traitement audio recommande de conserver soit les moyennes, soit les énergies, rarement les deux simultanément.
+\end{enumerate}
+
+\section{Analyse de Corrélation}
+
+\subsection{Variables Hautement Corrélées}
+
+\textcolor{red}{\textbf{[INFORMATIONS MANQUANTES]}}
+
+\textbf{Prochaine étape:}
+
+Le script Phase 2 affichera une liste de toutes les paires de variables avec corrélation $|r| > 0.99$. Vous devrez:
+
+\begin{enumerate}
+    \item Copier cette liste dans le rapport,
+    \item Commenter sur le degré de redondance observé,
+    \item Proposer si nécessaire d'autres suppressions au-delà des features 148--167.
+\end{enumerate}
+
+\begin{table}[H]
+\centering
+\caption{Variables avec corrélation $|r| > 0.99$ (à remplir après Phase 2)}
+\begin{tabular}{|l|l|c|}
+\hline
+\textbf{Variable 1} & \textbf{Variable 2} & \textbf{Corrélation} \\
+\hline
+? & ? & ? \\
+? & ? & ? \\
+\hline
+\end{tabular}
+\label{tab:high_corr}
+\end{table}
+
+\subsection{Variables Spécifiques: ASE et SFM}
+
+\textbf{Variables d'intérêt:} \texttt{PAR\_ASE\_M}, \texttt{PAR\_ASE\_MV}, \texttt{PAR\_SFM\_M}, \texttt{PAR\_SFM\_MV}
+
+\textit{Analyse attendue:}
+
+Produire une matrice de corrélation $4 \times 4$ pour ces quatre variables. Commenter:
+\begin{itemize}
+    \item Ces quatre variables capturent-elles des aspects réellement différents du signal?
+    \item Faut-il en supprimer certaines?
+    \item Existe-t-il une relation systématique entre variances et moyennes?
+\end{itemize}
+
+\section{Analyse en Composantes Principales}
+
+\textcolor{red}{\textbf{[INFORMATIONS MANQUANTES]}}
+
+\textbf{Prochaine étape:}
+
+Exécuter le script Phase 2 qui produira:
+\begin{enumerate}
+    \item Un \textbf{scree plot} montrant la variance expliquée par axe,
+    \item Deux \textbf{plans principaux} (PC1×PC2 et PC1×PC3) avec points colorés par genre,
+    \item Un \textbf{biplot} montrant les directions de chargement des variables.
+\end{enumerate}
+
+À partir de ces graphiques, analyser:
+\begin{itemize}
+    \item Combien d'axes principaux nécessaires pour expliquer 80\%, 90\% de la variance?
+    \item Les genres sont-ils bien séparés dans les deux premiers plans?
+    \item PC3 apporte-t-elle une discrimination supplémentaire?
+\end{itemize}
+
+\section{Classification Hiérarchique}
+
+\textcolor{red}{\textbf{[INFORMATIONS MANQUANTES]}}
+
+\textbf{Prochaine étape:}
+
+Le script Phase 2 effectuera un clustering hiérarchique (méthode de Ward) et générera:
+\begin{enumerate}
+    \item Un dendrogramme (sur un sous-échantillon pour lisibilité),
+    \item Silhouettes comparant genres réels vs clusters Ward,
+    \item Évaluation de l'impact de la normalisation.
+\end{enumerate}
+
+\section{Création des Ensembles Train/Test}
+
+\textbf{Spécification du projet:}
+
+\begin{lstlisting}
+set.seed(103)
+train = sample(c(TRUE,FALSE), n, replace=TRUE, prob=c(2/3,1/3))
+\end{lstlisting}
+
+\textit{Résultat attendu:}
+\begin{itemize}
+    \item Ensemble d'entraînement: $\approx 667$ observations (2/3),
+    \item Ensemble de test: $\approx 333$ observations (1/3).
+\end{itemize}
+
+Ces ensembles seront utilisés pour toutes les analyses supervisées ultérieures.
+
+\newpage
+
+% ============================================================================
+% PARTIE II: CLASSIFICATION BINAIRE
+% ============================================================================
+
+\chapter{Classification Binaire: Classical vs Jazz}
+
+\section{Introduction}
+
+Cette partie restreint l'analyse aux deux genres \texttt{Classical} et \texttt{Jazz}, produisant un problème de classification binaire.
+
+\textbf{Filtrage des données:}
+
+À partir des ensembles train/test de la Partie I, conserver uniquement les observations des genres Classical et Jazz.
+
+\textbf{Vérification:}
+
+Après filtrage, vous devriez obtenir:
+\begin{itemize}
+    \item Ensemble d'entraînement: 2851 observations,
+    \item Ensemble de test: 1503 observations.
+\end{itemize}
+
+Si les nombres différent, vérifier que le \texttt{seed(103)} a été appliqué correctement.
+
+\section{Modèles de Régression Logistique}
+
+\textcolor{red}{\textbf{[INFORMATIONS MANQUANTES]}}
+
+\textbf{Pour compléter cette section:}
+
+Exécuter le script Phase 3 qui construira quatre modèles logistiques:
+
+\begin{enumerate}
+    \item \textbf{ModT}: toutes les variables retenues après la Partie I,
+    \item \textbf{Mod1}: variables significatives au seuil $\alpha = 5\%$ dans ModT,
+    \item \textbf{Mod2}: variables significatives au seuil $\alpha = 20\%$ dans ModT,
+    \item \textbf{ModAIC}: sélection stepwise sur critère AIC.
+\end{enumerate}
+
+\textbf{Important:} Le modèle \texttt{ModAIC} peut prendre 20--40 minutes. C'est normal.
+
+\subsection{Formulations des Modèles}
+
+Après exécution, indiquer les formules précises (ex: \texttt{Y ~ X1 + X2 + \ldots}):
+
+\begin{description}[labelwidth=2.5cm]
+    \item[ModT:] \texttt{Y \textasciitilde [À remplir]}
+    \item[Mod1:] \texttt{Y \textasciitilde [À remplir]}
+    \item[Mod2:] \texttt{Y \textasciitilde [À remplir]}
+    \item[ModAIC:] \texttt{Y \textasciitilde [À remplir]}
+\end{description}
+
+\section{Courbes ROC et Évaluation}
+
+\textcolor{red}{\textbf{[INFORMATIONS MANQUANTES]}}
+
+\textbf{À générer après Phase 3:}
+
+\begin{enumerate}
+    \item Courbes ROC pour ModT sur ensembles train et test,
+    \item Superposition des courbes ROC de tous modèles sur ensemble de test,
+    \item Légende affichant les valeurs d'AUC pour chaque modèle.
+\end{enumerate}
+
+\textbf{Questions à répondre:}
+
+\begin{itemize}
+    \item Quel modèle préconisez-vous? Justifier le trade-off entre complexité et performance.
+    \item Vérifier son adéquation (tests de discrimination, calibration, etc.).
+\end{itemize}
+
+\section{Régression Ridge}
+
+\subsection{Intérêt de la Régression Ridge}
+
+\textit{À rédiger:} Expliquer pourquoi la régression ridge peut être utile dans ce contexte. Considérer:
+\begin{itemize}
+    \item La multicolinéarité (évidente dans les données MPEG-7),
+    \item L'instabilité des estimateurs maximum-vraisemblance,
+    \item La performance de généralisation.
+\end{itemize}
+
+\subsection{Chemins de Régularisation}
+
+\textcolor{red}{\textbf{[INFORMATIONS MANQUANTES]}}
+
+\textbf{À générer après Phase 3:}
+
+Le script produit un graphique montrant l'évolution des coefficients de régression en fonction de $\lambda \in [10^{10}, 10^{-2}]$.
+
+\textbf{Cas extrêmes:}
+
+\begin{description}[labelwidth=2cm]
+    \item[$\lambda = 10^{10}$:] Régularisation très forte $\Rightarrow$ coefficients tendant vers 0.
+    \item[$\lambda = 10^{-2}$:] Régularisation très faible $\Rightarrow$ coefficients tendant vers estimateurs non régularisés.
+\end{description}
+
+\section{Validation Croisée 10-Fold}
+
+\subsection{Algorithme}
+
+Expliquer l'algorithme de cross-validation 10-fold:
+
+\begin{enumerate}
+    \item Partitionner l'ensemble d'entraînement en 10 sous-ensembles de taille égale,
+    \item Pour chaque valeur de $\lambda$:
+    \begin{enumerate}
+        \item Pour chaque itération $i \in \{1, \ldots, 10\}$:
+        \begin{enumerate}
+            \item Entraîner sur 9 folds, évaluer sur le 10\textsuperscript{e} fold,
+            \item Enregistrer l'erreur,
+        \end{enumerate}
+        \item Moyenner les 10 erreurs,
+    \end{enumerate}
+    \item Sélectionner $\lambda$ minimisant l'erreur moyenne.
+\end{enumerate}
+
+\subsection{Résultats}
+
+\textcolor{red}{\textbf{[INFORMATIONS MANQUANTES]}}
+
+À partir de l'exécution du script Phase 3:
+
+\begin{table}[H]
+\centering
+\caption{Paramètres Ridge optimaux (à remplir)}
+\begin{tabular}{|l|c|c|}
+\hline
+\textbf{Critère} & \textbf{$\lambda$ optimal} & \textbf{Erreur CV} \\
+\hline
+$\lambda_{\text{min}}$ & ? & ? \\
+$\lambda_{\text{1se}}$ & ? & ? \\
+\hline
+\end{tabular}
+\label{tab:lambda_optimal}
+\end{table}
+
+\textit{Commentaire:} Justifier le choix entre $\lambda_{\min}$ et $\lambda_{\text{1se}}$ (one standard error rule).
+
+\section{Comparaison des Modèles}
+
+\textcolor{red}{\textbf{[INFORMATIONS MANQUANTES]}}
+
+\textbf{À produire après Phase 3:}
+
+Tableau synthétisant tous les indicateurs de performance:
+
+\begin{table}[H]
+\centering
+\caption{Performance comparée des modèles (à remplir)}
+\begin{tabular}{|l|c|c|c|c|}
+\hline
+\textbf{Modèle} & \textbf{Nb Var} & \textbf{AUC Test} & \textbf{Accuracy} & \textbf{AIC} \\
+\hline
+ModT & ? & ? & ? & ? \\
+Mod1 & ? & ? & ? & ? \\
+Mod2 & ? & ? & ? & ? \\
+ModAIC & ? & ? & ? & ? \\
+Ridge $\lambda_{\min}$ & ? & ? & ? & -- \\
+Ridge $\lambda_{\text{1se}}$ & ? & ? & ? & -- \\
+\hline
+\end{tabular}
+\label{tab:model_comparison}
+\end{table}
+
+\subsection{Recommandation Finale}
+
+\textit{À rédiger après analyse du tableau:}
+
+Recommander une méthode et justifier par:
+\begin{itemize}
+    \item Performance prédictive (AUC),
+    \item Parsimonies (nombre de variables),
+    \item Généralisation estimée,
+    \item Facilité d'interprétation.
+\end{itemize}
+
+\section{Prédictions sur Ensemble de Test}
+
+Pour le modèle retenu, générer les prédictions sur le fichier \texttt{Music\_test\_2026.txt} et les enregistrer dans \texttt{NOM1-NOM2\_test.txt}.
+
+\newpage
+
+% ============================================================================
+% PARTIE III: CLASSIFICATION MULTINOMIALE
+% ============================================================================
+
+\chapter{Classification Multinomiale}
+
+\section{Cadre Théorique}
+
+Pour plus de deux niveaux, on utilise la régression multinomiale. Supposant une observation $x$ (vecteur de dimension $p$) générée selon une loi multinomiale sur $K$ classes:
+
+\begin{equation}
+P(Y=k | x) = \frac{\exp(\beta_k^T x)}{1 + \sum_{j=1}^{K-1} \exp(\beta_j^T x)}
+\end{equation}
+
+pour $k = 1, \ldots, K-1$, et $P(Y=K|x)$ obtenue par normalisation.
+
+\section{Estimation et Évaluation}
+
+\textcolor{red}{\textbf{[INFORMATIONS MANQUANTES]}}
+
+\textbf{À compléter après Phase 4:}
+
+\begin{enumerate}
+    \item Coefficients d'estimation pour chaque genre,
+    \item Matrices de confusion,
+    \item Courbes ROC one-vs-rest,
+    \item AUC par classe.
+\end{enumerate}
+
+% ============================================================================
+% CONCLUSION
+% ============================================================================
+
+\chapter*{Conclusion}
+\addcontentsline{toc}{chapter}{Conclusion}
+
+\textcolor{red}{\textbf{[À RÉDIGER APRÈS TOUTES ANALYSES]}}
+
+Synthétiser:
+\begin{itemize}
+    \item Découvertes principales de la Partie I (structure données),
+    \item Performance finale du meilleur modèle binaire,
+    \item Performances multinomiales,
+    \item Limitations et perspectives d'amélioration.
+\end{itemize}
+
+% ============================================================================
+% ANNEXES
+% ============================================================================
+
+\appendix
+
+\chapter{Description du Dataset MPEG-7}
+
+\textcolor{red}{\textbf{[À COPIER depuis enonce/markdown.md]}}
+
+% ============================================================================
+% FIN DU DOCUMENT
+% ============================================================================
+
+\end{document}
