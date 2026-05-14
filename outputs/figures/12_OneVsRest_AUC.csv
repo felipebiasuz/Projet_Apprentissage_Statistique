@@ -1,0 +1,6 @@
+"Genre","OVR_AUC","Interpretation"
+"Blues",0.9987,"Excellent discrimination"
+"Classical",0.9754,"Very good discrimination"
+"Jazz",0.9664,"Very good discrimination"
+"Pop",0.9947,"Excellent discrimination"
+"Rock",0.9903,"Excellent discrimination"

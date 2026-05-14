@@ -23,8 +23,7 @@ print(round(genre_prop * 100, 2))
 # Save for report
 genre_df <- data.frame(
   Genre = names(genre_prop),
-  Count = as.numeric(table(Music_data$GE+
-                             NRE)),
+  Count = as.numeric(table(Music_data$GENRE)),
   Proportion = round(genre_prop * 100, 2)
 )
 cat("\nGenre Summary Table:\n")

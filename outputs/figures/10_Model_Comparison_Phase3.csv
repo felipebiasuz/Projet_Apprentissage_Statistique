@@ -1,0 +1,6 @@
+"Model","Variables","Test_AUC","Selected"
+"ModT",173,0.9609,""
+"Mod1",50,0.9097,""
+"Mod2",57,0.9162,""
+"ModAIC",148,0.9623,"⭐ BEST"
+"Ridge",173,0.9424,""

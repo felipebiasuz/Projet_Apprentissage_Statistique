@@ -9,7 +9,7 @@ cat("\n========== PHASE 3: BINARY CLASSIFICATION ==========\n")
 
 # --- 0. Load Previous Results ---
 cat("\n[0/7] Loading Phase 2 results...\n")
-source("02_Phase2_Analysis.R")
+source("scripts/02_Phase2_Analysis.R")
 
 # --- 1. FILTER CLASSICAL + JAZZ ---
 cat("\n[1/7] Filtering Classical and Jazz genres...\n")
@@ -124,7 +124,8 @@ cat("\n[5/7] Ridge regression analysis (glmnet)...\n")
 
 # Load glmnet if not already loaded
 if (!require(glmnet, quietly = TRUE)) {
-  install.packages("glmnet", quiet = TRUE)
+  options(repos = c(CRAN = "https://cran.r-project.org"))
+  install.packages("glmnet", quiet = TRUE, dependencies = TRUE)
   library(glmnet)
 }
 

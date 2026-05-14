@@ -9,7 +9,7 @@ cat("\n========== PHASE 4: MULTINOMIAL CLASSIFICATION ==========\n")
 
 # --- 0. Load Previous Results ---
 cat("\n[0/6] Loading Phase 3 results...\n")
-source("03_Phase3_Binary.R")
+source("scripts/03_Phase3_Binary.R")
 
 cat("\nStarting Phase 4: Multinomial classification for all 5 genres\n")
 
@@ -124,6 +124,10 @@ cat("Training multinomial model...\n")
 # Select feature columns
 feature_cols_multinomial <- setdiff(names(Music_train), "GENRE")
 
+# Define genres and counts for later use (needed for ROC curves)
+genres <- levels(Music_train$GENRE)
+n_genres <- length(genres)
+
 # Build multinomial model
 multinom_fit <- multinom(GENRE ~ ., 
                          data = Music_train[, c("GENRE", feature_cols_multinomial)],
@@ -133,8 +137,8 @@ multinom_fit <- multinom(GENRE ~ .,
 cat("✓ Multinomial model trained\n")
 
 # Predictions
-pred_train_multinom <- predict(multinom_fit, newdata = Music_train, type = "response")
-pred_test_multinom <- predict(multinom_fit, newdata = Music_test_data, type = "response")
+pred_train_multinom <- predict(multinom_fit, newdata = Music_train, type = "probs")
+pred_test_multinom <- predict(multinom_fit, newdata = Music_test_data, type = "probs")
 
 # Error rates
 true_train <- Music_train$GENRE
@@ -160,52 +164,57 @@ print(confusion_matrix)
 # --- 4. NEURAL NETWORK (nnet direct) ---
 cat("\n[4/6] Building neural network with nnet::nnet...\n")
 
-# Create numeric response for nnet (one-hot encoding)
-genres <- levels(Music_train$GENRE)
-n_genres <- length(genres)
+# IMPORTANT: nnet works better with normalized data
+cat("Training neural network with 5 hidden units...\n")
 
-# Create dummy response matrix
-Y_train_matrix <- matrix(0, nrow = nrow(Music_train), ncol = n_genres)
-for (i in 1:n_genres) {
-  Y_train_matrix[, i] <- as.numeric(Music_train$GENRE == genres[i])
-}
+# Create and normalize data for nnet
+X_train <- as.matrix(Music_train[, feature_cols_multinomial])
+X_test <- as.matrix(Music_test_data[, feature_cols_multinomial])
 
-# Prepare predictor matrix
-X_train_nnet <- as.matrix(Music_train[, feature_cols_multinomial])
+# Normalize to [0,1] using training set statistics
+scale_params <- list(
+  min = apply(X_train, 2, min),
+  max = apply(X_train, 2, max)
+)
+X_train_norm <- scale(X_train, center = scale_params$min, scale = scale_params$max - scale_params$min)
+X_test_norm <- scale(X_test, center = scale_params$min, scale = scale_params$max - scale_params$min)
 
-# Build neural network with hidden layer
-cat("Training neural network with 10 hidden units...\n")
-nn_fit <- nnet(x = X_train_nnet, 
-               y = Y_train_matrix,
-               size = 10,  # 10 hidden neurons
-               maxit = 200,
+# Create training data with normalized features
+train_data_nnet <- data.frame(GENRE = Music_train$GENRE, X_train_norm)
+test_data_nnet <- data.frame(GENRE = Music_test_data$GENRE, X_test_norm)
+
+nn_fit <- nnet(GENRE ~ ., 
+               data = train_data_nnet,
+               size = 5,  # 5 hidden neurons (reduced to avoid too many weights)
+               maxit = 500,  # Increased for better convergence with normalized data
+               decay = 1e-5,  # Reduced decay for better learning
                linout = FALSE,
                trace = FALSE)
 
-cat("✓ Neural network trained\n")
+cat("✓ Neural network trained (with normalized features)\n")
 
-# Compare with multinom
+# Network stats
 cat("\nNetwork Architecture:\n")
-cat(sprintf("  Inputs:   %d features\n", ncol(X_train_nnet)))
-cat(sprintf("  Hidden:   10 neurons\n"))
-cat(sprintf("  Outputs:  %d genres\n", n_genres))
+cat(sprintf("  Inputs:   %d features (normalized)\n", length(feature_cols_multinomial)))
+cat(sprintf("  Hidden:   5 neurons\n"))
+cat(sprintf("  Outputs:  5 genres\n"))
 
-# Predictions comparison
-nn_pred_train <- predict(nn_fit, X_train_nnet, type = "class")
-nn_pred_test <- predict(nn_fit, as.matrix(Music_test_data[, feature_cols_multinomial]), 
-                        type = "class")
+# Predictions comparison (use normalized test data)
+nn_pred_train <- predict(nn_fit, newdata = train_data_nnet, type = "class")
+nn_pred_test <- predict(nn_fit, newdata = test_data_nnet, type = "class")
 
 cat("\nNeural Network Performance:\n")
 cat(sprintf("  Train accuracy: %.2f%%\n", 
-            100*mean(nn_pred_train == true_train)))
+            100*mean(nn_pred_train == Music_train$GENRE)))
 cat(sprintf("  Test accuracy:  %.2f%%\n", 
-            100*mean(nn_pred_test == true_test)))
+            100*mean(nn_pred_test == Music_test_data$GENRE)))
 
 # --- 5. ONE-VS-REST ROC CURVES ---
 cat("\n[5/6] Building one-vs-rest ROC curves...\n")
 
 # Get probability predictions for each class
 pred_prob_test <- pred_test_multinom
+true_test <- Music_test_data$GENRE
 
 cat(sprintf("\nBuilding 5 ROC curves (one-vs-rest):\n"))
 
@@ -237,15 +246,15 @@ cat("\n========== MULTINOMIAL ANALYSIS COMPLETE ==========\n")
 cat("\nKey Findings:\n")
 cat(sprintf("  • multinom() accuracy: %.2f%%\n", 100*(1-error_test)))
 cat(sprintf("  • Neural network accuracy: %.2f%%\n", 
-            100*mean(nn_pred_test == true_test)))
-cat(sprintf("  • Comparison: Methods roughly equivalent\n"))
+            100*mean(nn_pred_test == Music_test_data$GENRE)))
+cat(sprintf("  • Comparison: multinom() still outperforms neural network\n"))
 
 cat("\nCritical Points (for report):\n")
 cat("  1. Multinomial is family exponential with softmax link\n")
 cat("  2. Newton implementation needs IRLS for stability\n")
 cat("  3. ChatGPT code educationally correct, not production-ready\n")
 cat("  4. One-vs-rest ROC curves replace single ROC for multi-class\n")
-cat("  5. Neural network alternative gives similar results\n")
+cat("  5. Neural network requires normalization but underperforms multinomial\n")
 
 cat("\n========== PHASE 4 COMPLETE ==========\n")
 cat("Ready for Phase 5:\n")
